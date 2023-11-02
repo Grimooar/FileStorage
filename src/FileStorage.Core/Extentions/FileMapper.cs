@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FileStorage.Domain.Models;
 using FileStorage.DTOs.Dto;
+using File = FileStorage.Domain.Models.File;
 
 namespace FileStorage.Core.Extentions
 {
@@ -8,11 +9,11 @@ namespace FileStorage.Core.Extentions
     {
         public FileMapper()
         {
-            CreateMap<FileData, FileDataDto>()
+            CreateMap<File, FileDataDto>()
                 .ForMember(dest => dest.FileParts, opt => opt.MapFrom(src => src.FileParts))
                 .ReverseMap();
 
-            CreateMap<FileDataCreateDto, FileData>()
+            CreateMap<FileDataCreateDto, File>()
                 .ForMember(dest => dest.FileName, opt => opt.MapFrom(src => src.FileName))
                 .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => src.ContentType))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))

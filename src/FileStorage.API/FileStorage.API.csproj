@@ -34,8 +34,5 @@
       <ProjectReference Include="..\FileStorage.Infrastructure\FileStorage.Infrastructure.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Mappers\" />
-    </ItemGroup>
 
 </Project>

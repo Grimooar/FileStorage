@@ -11,5 +11,5 @@ public class User : IdentityUser<int>, ICreatedAtTrackedEntity, IKeyEntity<int>
     public string? LastName { get; set; }
     public new string? Email { get; set; }
     public DateTime Created { get; set; }
-    public virtual ICollection<FileData> Files { get; set; }
+    public virtual ICollection<File> Files { get; set; }
 }

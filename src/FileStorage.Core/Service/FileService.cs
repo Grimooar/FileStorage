@@ -4,19 +4,20 @@ using FileStorage.DTOs.Dto;
 using Kirel.Repositories.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using File = FileStorage.Domain.Models.File;
 
 namespace FileStorage.Core.Service
 {
     public class FileService
     {
-        private readonly IKirelGenericEntityRepository<int, FileData> _fileRepository;
-        private readonly IKirelGenericEntityRepository<int, FilePart> _filePartRepository;
+        private readonly IKirelGenericEntityRepository<int, File> _fileRepository;
+        private readonly IKirelGenericEntityRepository<int, FileDataPart> _filePartRepository;
         private readonly IKirelGenericEntityRepository<int, User> _userRepository;
         private readonly IMapper _mapper;
 
-        public FileService(IKirelGenericEntityRepository<int, FileData> fileRepository, IMapper mapper,
+        public FileService(IKirelGenericEntityRepository<int, File> fileRepository, IMapper mapper,
             IKirelGenericEntityRepository<int, User> userRepository,
-            IKirelGenericEntityRepository<int, FilePart> filePartRepository)
+            IKirelGenericEntityRepository<int, FileDataPart> filePartRepository)
         {
             _fileRepository = fileRepository;
             _mapper = mapper;
@@ -46,7 +47,7 @@ namespace FileStorage.Core.Service
                         break;
                     }
 
-                    var filePart = new FilePart
+                    var filePart = new FileDataPart
                     {
                         Data = new byte[bytesRead],
                         PartNumber = partNumber,
@@ -87,14 +88,14 @@ namespace FileStorage.Core.Service
             var file = await _fileRepository.GetById(fileId);
             if (file == null)
             {
-                throw new FileNotFoundException($"FileData with ID {fileId} was not found in the database.");
+                throw new FileNotFoundException($"File with ID {fileId} was not found in the database.");
             }
 
             // Преобразование FileModel в FileDataDto
             return _mapper.Map<FileDataDto>(file);
         }
         
-        public async Task<List<FilePart>> GetFilePartsByFileId(int fileId)
+        public async Task<List<FileDataPart>> GetFilePartsByFileId(int fileId)
         {
             var parts = await _filePartRepository.GetList(
                 fp => fp.FileDataId == fileId,
@@ -130,16 +131,11 @@ namespace FileStorage.Core.Service
                 currentIndex += part.Data.Length;
             }
 
-            return new FileDataDto
-            {
-                FileName = file.FileName,
-                ContentType = file.ContentType,
-                UserId = file.UserId,
-                User = file.User,
-                Created = file.Created,
-                FileParts = fileParts
-            };
+            file.Data = combinedData; 
+
+            return _mapper.Map<FileDataDto>(file);
         }
+
 
 
 
@@ -154,7 +150,7 @@ public async Task<List<FileDataDto>> SearchFiles(string fileName)
 
             if (existingFiles == null || !existingFiles.Any())
             {
-                throw new FileNotFoundException($"FileData with the name '{fileName}' was not found in the database.");
+                throw new FileNotFoundException($"File with the name '{fileName}' was not found in the database.");
             }
 
             // Преобразование сущностей файлов в DTO

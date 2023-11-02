@@ -1,5 +1,6 @@
 ﻿using FileStorage.Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using File = FileStorage.Domain.Models.File;
 
 namespace FileStorage.Infrastructure.Context;
 
@@ -13,7 +14,7 @@ public class FileDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>().HasKey(u => u.Id);
-        modelBuilder.Entity<FileData>().HasKey(f => f.Id);
+        modelBuilder.Entity<File>().HasKey(f => f.Id);
         modelBuilder.Entity<Folder>().HasKey(f => f.Id);
         modelBuilder.Entity<FolderFile>().HasKey(ff => ff.Id);
 
@@ -29,13 +30,13 @@ public class FileDbContext : DbContext
             .HasForeignKey(ff => ff.FolderId);
 
         modelBuilder.Entity<FolderFile>()
-            .HasOne(ff => ff.FileData)
+            .HasOne(ff => ff.File)
             .WithMany()
             .HasForeignKey(ff => ff.FileId);
     }
     
-    private DbSet<FileData>? Files { get; set; }
+    private DbSet<File>? Files { get; set; }
     private DbSet<Folder>? Folders { get; set; }
     private DbSet<FolderFile>? FolderFiles { get; set; }
-    private DbSet<FilePart> FileParts { get; set; }
+    private DbSet<FileDataPart> FileParts { get; set; }
 }

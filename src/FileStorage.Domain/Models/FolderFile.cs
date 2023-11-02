@@ -8,6 +8,6 @@ public class FolderFile : ICreatedAtTrackedEntity, IKeyEntity<int>
     public int FolderId { get; set; }
     public int FileId { get; set; }
     public virtual Folder Folder { get; set; }
-    public virtual FileData FileData { get; set; }
+    public virtual File File { get; set; }
     public DateTime Created { get; set; }
 }
