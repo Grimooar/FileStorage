@@ -26,42 +26,76 @@ namespace FileStorage.Core.Service
         }
 
         public async Task UploadFile(IFormFile fileData, int userId)
+{
+    if (fileData == null || fileData.Length == 0)
+    {
+        throw new ArgumentException("Invalid file data.");
+    }
+
+    if (fileData.Length <= 300000) // Пороговый размер для целого файла
+    {
+        var newFile = new FileDataCreateDto
         {
-            if (fileData == null || fileData.Length == 0)
+            FileName = fileData.FileName,
+            ContentType = fileData.ContentType,
+            UserId = userId,
+            Created = DateTime.UtcNow
+        };
+
+        using (var stream = fileData.OpenReadStream())
+        {
+            var data = new byte[fileData.Length];
+            await stream.ReadAsync(data, 0, (int)fileData.Length);
+
+            newFile.Data = data;
+
+            var file = _mapper.Map<File>(newFile);
+
+            try
             {
-                throw new ArgumentException("Invalid file data.");
+                await _fileRepository.Insert(file);
             }
-
-            var buffer = new byte[262144]; 
-
-            
-            using (var stream = fileData.OpenReadStream())
+            catch (Exception ex)
             {
-                int partNumber = 1; 
-
-                while (true)
-                {
-                    int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-                    if (bytesRead == 0)
-                    {
-                        break;
-                    }
-
-                    var filePart = new FileDataPart
-                    {
-                        Data = new byte[bytesRead],
-                        PartNumber = partNumber,
-                        FileDataId = 0 
-                    };
-
-                    Array.Copy(buffer, filePart.Data, bytesRead);
-
-                    var savedPart = await _filePartRepository.Insert(filePart);
-
-                    partNumber++;
-                }
+                // Обработка ошибок при записи в репозиторий
+                throw new IOException("Failed to insert file.", ex);
             }
         }
+    }
+    else
+    {
+        // Разбивка файла на части и сохранение
+        var buffer = new byte[1048576]; // Размер буфера для чтения файла (можете настроить)
+
+        using (var stream = fileData.OpenReadStream())
+        {
+            int partNumber = 1;
+
+            while (true)
+            {
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                var filePart = new FileDataPart
+                {
+                    Data = new byte[bytesRead],
+                    PartNumber = partNumber,
+                    FileDataId = 0 // Здесь нужно будет установить соответствующий ID
+                };
+
+                Array.Copy(buffer, filePart.Data, bytesRead);
+
+                var savedPart = await _filePartRepository.Insert(filePart);
+
+                partNumber++;
+            }
+        }
+    }
+}
+
         public async Task<byte[]> CombineFileParts(int fileId)
         {
             var fileDataDto = await DownloadFile(fileId);
