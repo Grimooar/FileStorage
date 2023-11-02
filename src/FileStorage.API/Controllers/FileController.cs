@@ -18,7 +18,7 @@ namespace FileStorage.API.Controllers
         }
         
         [HttpPost("upload")]
-        [RequestSizeLimit(40000000000000)]
+        [RequestSizeLimit(Int64.MaxValue)]
         public async Task<IActionResult> UploadFile([FromForm] IFormFile fileDataDto, int userId)
         { 
             userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value!);

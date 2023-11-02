@@ -65,11 +65,12 @@ namespace FileStorage.Core.Service
     else
     {
         // Разбивка файла на части и сохранение
-        var buffer = new byte[1048576]; // Размер буфера для чтения файла (можете настроить)
+        var buffer = new byte[1048576]; // Размер буфера для чтения файла (1 МБ)
 
         using (var stream = fileData.OpenReadStream())
         {
             int partNumber = 1;
+            File? createdFileData = null;
 
             while (true)
             {
@@ -79,11 +80,34 @@ namespace FileStorage.Core.Service
                     break;
                 }
 
+                if (createdFileData == null)
+                {
+                    var newFile = new FileDataCreateDto
+                    {
+                        FileName = fileData.FileName,
+                        ContentType = fileData.ContentType,
+                        UserId = userId,
+                        Created = DateTime.UtcNow
+                    };
+
+                    var file = _mapper.Map<File>(newFile);
+
+                    try
+                    {
+                        createdFileData = await _fileRepository.Insert(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Обработка ошибок при записи в репозиторий
+                        throw new IOException("Failed to insert file.", ex);
+                    }
+                }
+
                 var filePart = new FileDataPart
                 {
                     Data = new byte[bytesRead],
                     PartNumber = partNumber,
-                    FileDataId = 0 // Здесь нужно будет установить соответствующий ID
+                    FileDataId = createdFileData.Id
                 };
 
                 Array.Copy(buffer, filePart.Data, bytesRead);
@@ -95,6 +119,7 @@ namespace FileStorage.Core.Service
         }
     }
 }
+
 
         public async Task<byte[]> CombineFileParts(int fileId)
         {
