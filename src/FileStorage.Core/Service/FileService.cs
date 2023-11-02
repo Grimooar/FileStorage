@@ -174,17 +174,18 @@ namespace FileStorage.Core.Service
 
 
 
-public async Task<List<FileDataDto>> SearchFiles(string fileName)
+        public async Task<List<FileDataDto>> SearchFiles(int? userId, string fileName)
         {
-            // Поиск файлов в базе данных по имени файла.
-            var existingFiles = await _fileRepository.GetList(
-                f => f.FileName != null && f.FileName.Contains(fileName),
+            // Поиск файлов в базе данных в зависимости от заданных критериев.
+           var existingFiles = await _fileRepository.GetList(
+                f => (userId == null || f.UserId == userId) && (string.IsNullOrEmpty(fileName) || f.FileName.Contains(fileName)),
                 includes: q => q.Include(f => f.User)
             );
+            
 
-            if (existingFiles == null || !existingFiles.Any())
+            if (existingFiles == null)
             {
-                throw new FileNotFoundException($"File with the name '{fileName}' was not found in the database.");
+                throw new FileNotFoundException("No files matching the search criteria were found in the database.");
             }
 
             // Преобразование сущностей файлов в DTO
@@ -192,6 +193,7 @@ public async Task<List<FileDataDto>> SearchFiles(string fileName)
 
             return fileDtos;
         }
+
 
         public async Task DeleteFile(int fileId)
         {
